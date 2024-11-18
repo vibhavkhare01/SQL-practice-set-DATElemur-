@@ -1,0 +1,40 @@
+WITH RankedMeasurements AS (
+    SELECT
+        DATE(measurement_time) AS measurement_day,
+        measurement_value,
+        ROW_NUMBER() OVER (PARTITION BY DATE(measurement_time) ORDER BY measurement_time) AS sequence_number
+    FROM
+        measurements
+),
+ClassifiedMeasurements AS (
+    SELECT
+        measurement_day,
+        measurement_value,
+        CASE
+            WHEN sequence_number % 2 = 1 THEN 'Odd'
+            ELSE 'Even'
+        END AS measurement_type
+    FROM
+        RankedMeasurements
+)
+SELECT
+    measurement_day,
+    SUM(CASE WHEN measurement_type = 'Odd' THEN measurement_value ELSE 0 END) AS odd_sum,
+    SUM(CASE WHEN measurement_type = 'Even' THEN measurement_value ELSE 0 END) AS even_sum
+FROM
+    ClassifiedMeasurements
+GROUP BY
+    measurement_day
+ORDER BY
+    measurement_day;
+
+--Explanation:
+
+--1. ROW_NUMBER(): Assigns a sequential number to each measurement, ordered by measurement_time within each day.
+
+
+
+--3. Summing Values: The sums of measurement values for odd and even measurements are calculated using conditional aggregation with SUM(CASE ...).
+
+
+-- Grouping by Day: The final output groups the results by the date (measurement_day) and provides the sum for odd and even measurements separately.ement_time      
